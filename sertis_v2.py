@@ -4,7 +4,7 @@ import numpy as np
 import os
 import multiprocessing as mp
 #saved_model_path='saved_model'
-
+import regex as re
 
 
 def nonzero(a):
@@ -14,9 +14,13 @@ def split(s, indices):
     return [s[i:j] for i,j in zip(indices, indices[1:]+[None])]
 
 def sertis_tokenizer(text, ind, saved_model_path):
-    if ind%2:
+    if ind%2 == 1:
         return (-1,-1,-1)
     text = text.strip().split('||')
+    print(text)
+    for i in range(len(text)):
+        if text[i] == '':
+            text[i] = ' '
     inputs = [[ThaiWordSegmentLabeller.get_input_labels(i)] for i in text]
     #print(inputs)
     lengths = [[len(i)] for i in text]
@@ -32,16 +36,19 @@ def sertis_tokenizer(text, ind, saved_model_path):
         label = []
         all_words = []
         for i, j in enumerate(inputs):
+            if j == [ThaiWordSegmentLabeller.get_input_labels('')]:
+                print('YES')
             #print(j)
             #print(lengths[i])
             y = session.run(g_outputs, feed_dict = {g_inputs: j, g_lengths: lengths[i], g_training: False})
             words = split(text[i], nonzero(y))
+            words = [word.strip() for word in words if word.strip() != '']
             if i % 2:
                 label = label + ['1']*len(words)
             else:
                 label = label + ['0']*len(words)
             all_words = all_words + words
-    print(words)
+    #print(words)
     #print(all_words)
     #print(label)
     print('finished!!!')
@@ -50,7 +57,7 @@ def sertis_tokenizer(text, ind, saved_model_path):
 def main():
     os.chdir('E:\\min\\Tokyo_tech_exchange\\NER\\data')
     saved_model_path = 'E:\\Coding_projects\\Name-Entity-Recognition-at-tokyo-tech\\saved_model'
-    num_process = 4#os.cpu_count()#-1
+    num_process = os.cpu_count()
     
     print(num_process)
     with mp.Pool(processes=num_process) as pool:
@@ -63,12 +70,13 @@ def main():
             print(cur_type)
             print('now reach: ' + str((all_types.index(cur_type)+1)/len(all_types)))
             cnt_word = 0
+            cnt_sentence = 0
             word_min = 100000000
             word_max = 0
             with open(cur_type+'.txt', 'r', encoding='utf8') as f:
                 with open('.\\sertis_data\\'+ cur_type + '_sertis.txt', 'a', encoding = 'utf8') as f_out:
                     with open('.\\sertis_data\\'+ cur_type + '_label_sertis.txt', 'a', encoding = 'utf8') as f_out_label:
-                        results = [pool.apply(sertis_tokenizer, args=(x,ind,saved_model_path)) for ind, x in enumerate(f)]
+                        results = [pool.apply(sertis_tokenizer, args=(re.sub(r'[^ก-๙A-Za-z0-9.-/%:]','  ',x),ind,saved_model_path)) for ind, x in enumerate(f)]
                         for Words, Label, num_word in results:
                             if Words == -1:
                                 continue
