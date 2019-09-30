@@ -24,7 +24,6 @@ def sertis_tokenizer(text, saved_model_path):
         model = tf.saved_model.loader.load(session, [tf.saved_model.tag_constants.SERVING], saved_model_path)
         signature = model.signature_def[tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
         graph = tf.get_default_graph()
-
         g_inputs = graph.get_tensor_by_name(signature.inputs['inputs'].name)
         g_lengths = graph.get_tensor_by_name(signature.inputs['lengths'].name)
         g_training = graph.get_tensor_by_name(signature.inputs['training'].name)
@@ -35,7 +34,10 @@ def sertis_tokenizer(text, saved_model_path):
 def main():
     os.chdir('E:\\min\\Tokyo_tech_exchange\\NER\\data')
     saved_model_path = 'E:\\Coding_projects\\Name-Entity-Recognition-at-tokyo-tech\\saved_model'
-	pool = mp.Pool(processes=os.cpu_count()-1)
+    num_process = 4#os.cpu_count()#-1
+    
+    print(num_process)
+    pool = mp.Pool(processes=num_process)
     all_types = ['mea', 'org', 'dat', 'loc', 'per', 'oth']
     all_word_cnt = []
     all_article_cnt = []
@@ -95,6 +97,7 @@ def main():
         f.write('article_cnt: '+ ','.join(all_article_cnt)+'\n')
         f.write('max: '+ ','.join(all_max) + '\n')
         f.write('min: '+ ','.join(all_min)+'\n')
+
 if __name__ == '__main__':
     main()
 # w = sertis_tokenizer(['ฉันกินข้าวปลาอาหาร', 'ฉันไม่กินข้าว ปลา อาหาร'], saved_model_path)
