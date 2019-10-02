@@ -14,12 +14,15 @@ def split(s, indices):
     return [s[i:j] for i,j in zip(indices, indices[1:]+[None])]
 
 def sertis_tokenizer(text, saved_model_path):
+    print(text)
     text = text.strip().split('||')
+    print(len(text))
     #print(text)
     for i in range(len(text)):
         if text[i] == '':
             text[i] = ' '
     inputs = [[ThaiWordSegmentLabeller.get_input_labels(i)] for i in text]
+    #print(len(inputs))
     #print(inputs)
     lengths = [[len(i)] for i in text]
     #print(lengths)
@@ -41,9 +44,12 @@ def sertis_tokenizer(text, saved_model_path):
             y = session.run(g_outputs, feed_dict = {g_inputs: j, g_lengths: lengths[i], g_training: False})
             words = split(text[i], nonzero(y))
             words = [word.strip() for word in words if word.strip() != '']
+            print(i)
             if i % 2:
+                print('label')
                 label = label + ['1']*len(words)
             else:
+                print('not label')
                 label = label + ['0']*len(words)
             all_words = all_words + words
     print(len(words))
@@ -69,7 +75,7 @@ def main():
     all_article_cnt = []
     all_max = []
     all_min = []
-    batch_size = 300
+    batch_size = 20
     for cur_type in all_types:
         print(cur_type)
         print('now reach: ' + str((all_types.index(cur_type)+1)/len(all_types)))
@@ -87,7 +93,7 @@ def main():
                     if line_ind % batch_size == 0:
                         if line_ind !=0:
                             pool = mp.Pool(processes=num_process)
-                            results = [pool.apply(sertis_tokenizer, args=(re.sub(r'[^ก-๙A-Za-z0-9.-/%:]','  ',x),saved_model_path)) for x in article]
+                            results = [pool.apply(sertis_tokenizer, args=(re.sub(r'[^ก-๙A-Za-z0-9.-/%:|]','  ',x),saved_model_path)) for x in article]
                             pool.close()
                             pool.join()
                             with open('.\\sertis_data\\'+ cur_type + '_sertis.txt', 'a', encoding = 'utf8') as f_out:
@@ -127,7 +133,11 @@ def main():
         all_article_cnt.append(cnt_sentence)
         all_max.append(word_max)
         all_min.append(word_min)
-        
+    all_word_cnt = [str(i) for i in all_word_cnt]
+    all_article_cnt = [str(i) for i in all_article_cnt]
+    all_max = [str(i) for i in all_max]
+    all_min = [str(i) for i in all_min]
+    
     with open('.\\sertis_data\\report_sertis.txt', 'w') as f:
         f.write('all_type: ' + ','.join(all_types) + '\n')
         f.write('word_cnt: '+ ','.join(all_word_cnt) + '\n')
