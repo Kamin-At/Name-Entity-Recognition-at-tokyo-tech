@@ -14,9 +14,9 @@ def split(s, indices):
     return [s[i:j] for i,j in zip(indices, indices[1:]+[None])]
 
 def sertis_tokenizer(text, saved_model_path):
-    print(text)
+    #print(text)
     text = text.strip().split('||')
-    print(len(text))
+    #print(len(text))
     #print(text)
     for i in range(len(text)):
         if text[i] == '':
@@ -44,7 +44,7 @@ def sertis_tokenizer(text, saved_model_path):
             y = session.run(g_outputs, feed_dict = {g_inputs: j, g_lengths: lengths[i], g_training: False})
             words = split(text[i], nonzero(y))
             words = [word.strip() for word in words if word.strip() != '']
-            print(i)
+            #print(i)
             if i % 2:
                 print('label')
                 label = label + ['1']*len(words)
@@ -63,19 +63,19 @@ def main():
     saved_model_path = 'E:\\Coding_projects\\Name-Entity-Recognition-at-tokyo-tech\\saved_model'
     num_process = os.cpu_count()
     total_num_line = {} 
-    for i in [ 'dat', 'loc', 'per', 'oth']:
+    for i in ['mea', 'org', 'dat', 'loc', 'per', 'oth']:
         with open(i+'.txt', 'r', encoding='utf8') as f:
             num_line = 0
             for line in f:
                 num_line = num_line + 1
             total_num_line[i] = num_line
     print(num_process)
-    all_types = ['dat', 'loc', 'per', 'oth']
+    all_types = ['mea', 'org', 'dat', 'loc', 'per', 'oth']
     all_word_cnt = []
     all_article_cnt = []
     all_max = []
     all_min = []
-    batch_size = 20
+    batch_size = 300
     for cur_type in all_types:
         print(cur_type)
         print('now reach: ' + str((all_types.index(cur_type)+1)/len(all_types)))
@@ -111,7 +111,7 @@ def main():
                                         f_out_label.write('\n')
                                     article = []
             pool = mp.Pool(processes=num_process)
-            results = [pool.apply(sertis_tokenizer, args=(re.sub(r'[^ก-๙A-Za-z0-9.-/%:]','  ',x),saved_model_path)) for x in article]
+            results = [pool.apply(sertis_tokenizer, args=(re.sub(r'[^ก-๙A-Za-z0-9.-/%:|]','  ',x),saved_model_path)) for x in article]
             pool.close()
             pool.join()
             with open('.\\sertis_data\\'+ cur_type + '_sertis.txt', 'a', encoding = 'utf8') as f_out:
