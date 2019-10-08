@@ -52,7 +52,16 @@ def sertis_tokenizer(text, saved_model_path):
                 print('not label')
                 label = label + ['0']*len(words)
             all_words = all_words + words
-    print(len(words))
+    print(len(all_words))
+    #print(all_words)
+    if len(all_words) != len(label):
+        print('-------------------------------------------------')
+        print('-------------------------------------------------')
+        print('WTF')
+        print(all_words)
+        print(label)
+        print('-------------------------------------------------')
+        print('-------------------------------------------------')
     #print(all_words)
     #print(label)
     #print('finished!!!')
